@@ -8,7 +8,7 @@ The current folder contains:
 | --- | --- |
 | `RDKX5pzg21-high MJPG-T-C-ByteTrack.py` | Main Python application for RDK X5. |
 | `2026嵌入式大赛应用赛道作品.docx` | Competition report describing the system design, implementation, and results. |
-| `lv_0_20260706165707.mp4` | Demonstration video. |
+| `lv_0_20260706165707.mp4` | Demonstration video, MP4 container with AVC/H.264 video encoding. |
 
 ## Features
 
