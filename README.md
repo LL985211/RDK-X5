@@ -1,14 +1,14 @@
 # Adaptive Polarization Imaging and Visual Tracking System on RDK X5
 
-This project implements an embedded vision system for glare-heavy scenes such as water surfaces, wet roads, reflective metal, glass, and UAV inspection targets. It combines an RDK X5 edge AI board, an STM32-controlled rotating linear polarizer, camera capture, image quality scoring, YOLOv8n BPU inference, ByteTrack multi-object tracking, local recording, and optional RTSP streaming.
+This project implements an embedded vision system for glare-heavy scenes such as water surfaces, wet roads, reflective metal, glass, and UAV inspection targets. It combines an RDK X5 edge AI board, an STM32-controlled rotating linear polarizer, camera capture, image quality scoring, YOLOv8n BPU inference, DaSiamRPN single-object tracking, local recording, and optional RTSP streaming.
 
 The current folder contains:
 
 | File | Description |
 | --- | --- |
-| `RDKX5pzg21-high MJPG-T-C-ByteTrack.py` | Main Python application for RDK X5. |
+| `RDKX5pzg21-high MJPG-T-C-RPN.py` | Main Python application for RDK X5, using YOLOv8n BPU detection and DaSiamRPN tracking. |
 | `2026嵌入式大赛应用赛道作品.docx` | Competition report describing the system design, implementation, and results. |
-| `lv_0_20260706165707.mp4` | Demonstration video, MP4 container with AVC/H.264 video encoding. |
+| `13ca1b07ab06b731c25ccccd37dcd7a2.mp4` | Demonstration video, MP4 container with AVC/H.264 video encoding. |
 
 ## Features
 
@@ -17,8 +17,8 @@ The current folder contains:
 - Best-angle selection and automatic return to the highest-scoring polarizer angle.
 - Camera preview with OpenCV windows for live view and best-frame view.
 - YOLOv8n object detection accelerated by the RDK X5 BPU.
-- ByteTrack multi-object tracking with clickable target ID selection.
-- Tracking video recording with bounding boxes and track IDs.
+- YOLO-assisted target selection followed by DaSiamRPN single-object tracking.
+- Tracking video recording with target bounding boxes.
 - CSV and JSON evaluation output for each capture round.
 - Optional RTSP streaming for live video and best-frame preview when MediaMTX is running.
 
@@ -26,7 +26,7 @@ The current folder contains:
 
 The system uses a split embedded architecture:
 
-- **RDK X5** handles camera acquisition, image quality evaluation, BPU inference, ByteTrack tracking, UI display, video recording, data export, and RTSP push.
+- **RDK X5** handles camera acquisition, image quality evaluation, BPU inference, DaSiamRPN tracking, UI display, video recording, data export, and RTSP push.
 - **STM32** handles real-time polarizer motor execution, angle feedback, and low-level actuator protection.
 - **Camera and polarizer module** provide the optical front end.
 - **Optional gimbal or flight controller** can consume tracking and visual servo information in an extended deployment.
@@ -34,8 +34,8 @@ The system uses a split embedded architecture:
 The main runtime loop has three user-facing modes:
 
 1. `SCAN`: run polarization scanning and best-frame selection.
-2. `DETECT`: run continuous detection and show selectable tracked boxes.
-3. `TRACKING`: highlight the selected target ID and optionally record tracking video.
+2. `DETECT`: run continuous YOLO detection and show selectable target boxes.
+3. `TRACKING`: track the selected target with DaSiamRPN and optionally record tracking video.
 
 ## Hardware Requirements
 
@@ -71,7 +71,7 @@ Required runtime components:
 - Horizon `hobot_dnn`
 - `rdk_model_zoo`
 - `ultralytics_yolo_det`
-- `cjm_byte_track`
+- OpenCV tracking APIs, including DaSiamRPN and CSRT fallback support
 - FFmpeg, for RTSP push and video handling
 - MediaMTX, optional, for RTSP serving
 
@@ -95,7 +95,7 @@ Adjust these paths in the script if your RDK X5 user name or model location is d
 On the RDK X5, run:
 
 ```bash
-python3 "RDKX5pzg21-high MJPG-T-C-ByteTrack.py"
+python3 "RDKX5pzg21-high MJPG-T-C-RPN.py"
 ```
 
 Startup checks include:
@@ -111,7 +111,7 @@ Startup checks include:
 | --- | --- |
 | `SCAN` | Press `A` to start one polarization scan round. |
 | `SCAN` | Press `T` to enter continuous target detection mode. |
-| `DETECT` | Click a bounding box to select its track ID and enter tracking mode. |
+| `DETECT` | Click a bounding box to initialize the tracker and enter tracking mode. |
 | `DETECT` | Press `X` to cancel detection and return to scan mode. |
 | `TRACKING` | Press `A` or `X` to stop tracking and return to scan mode. |
 | `TRACKING` | Press `C` to start or stop tracking video recording. |
@@ -172,7 +172,7 @@ The competition report in this folder describes a complete RDK X5 and STM32 clos
 - `Capture_002`: best angle 10 degrees, score 82.54.
 - `Capture_003`: best angle 150 degrees, score 83.27.
 
-The report also states that adaptive polarization improved tracking IoU from 48.5% with normal RGB input to 67.5% in the tested reflective scene.
+The report also states that adaptive polarization improved tracking IoU from 48.5% with normal RGB input to 67.5% in the tested reflective scene, with the current report describing the tracking module as SiamRPN-based.
 
 ## Notes
 
